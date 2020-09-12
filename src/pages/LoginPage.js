@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, ScrollView, TextInput, Button, View, Image, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, ScrollView, TextInput, Button, View, Image, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, AsyncStorage } from 'react-native';
 import FormRow from './../components/FormRow';
 import firebase from 'firebase';
 
@@ -17,6 +17,12 @@ export default class LoginPage extends React.Component {
     }
 
     componentDidMount() {
+        AsyncStorage.getItem('NT::UserData').then((user_data_json) => {
+            let user_data = JSON.parse(user_data_json);
+            if (user_data != null) {
+                this.access(user_data)
+            }
+        })
         var firebaseConfig = {
             apiKey: "AIzaSyAqcDmB1CfgYAiUZtcWAI3NNtI7hYNg9F8",
             authDomain: "notetimeline-29586.firebaseapp.com",
@@ -56,8 +62,9 @@ export default class LoginPage extends React.Component {
                 return "Erro desconhecido";
         }
     }
-    access() {
+    access(userData) {
         this.setState({ isLoading: false });
+        AsyncStorage.setItem('NT::UserData', JSON.stringify(userData));
         this.props.navigation.replace('Pessoas')
     }
 
@@ -69,7 +76,7 @@ export default class LoginPage extends React.Component {
             .auth()
             .signInWithEmailAndPassword(email, password)
             .then(user => {
-                this.access()
+                this.access(user)
             })
             .catch(error => {
                 this.setState({
@@ -81,7 +88,7 @@ export default class LoginPage extends React.Component {
 
     getRegister() {
         const { email, password } = this.state;
-        if(!email || !password){
+        if (!email || !password) {
             Alert.alert(
                 "Cadastro!",
                 "Para se cadastrar informe em-mail e senha"
@@ -94,21 +101,21 @@ export default class LoginPage extends React.Component {
             [{
                 text: "Cancelar",
                 style: "cancel" // IOS
-            },{
+            }, {
                 text: "Cadastrar",
-                onPress: () => {this.register() }
+                onPress: () => { this.register() }
             }],
         );
     }
 
-    register(){
+    register() {
         const { email, password } = this.state;
 
         return firebase
             .auth()
             .createUserWithEmailAndPassword(email, password)
             .then(user => {
-                this.access();
+                this.access(user);
             })
             .catch(error => {
                 this.setState({
@@ -145,17 +152,17 @@ export default class LoginPage extends React.Component {
 
     renderMessage() {
         const { message } = this.state;
-        if(!message)
+        if (!message)
             return null;
 
-            Alert.alert(
-                "Erro!",
-                message.toString(),
-                [{
-                    text: 'OK',
-                    onPress: () => { this.setState({ message: '' }); }
-                }]
-            )
+        Alert.alert(
+            "Erro!",
+            message.toString(),
+            [{
+                text: 'OK',
+                onPress: () => { this.setState({ message: '' }); }
+            }]
+        )
     }
 
     render() {
@@ -183,8 +190,8 @@ export default class LoginPage extends React.Component {
                             onChangeText={(value) => this.onChangeHandler('password', value)}
                         />
                     </FormRow>
-                { this.renderButton()}
-                {this.renderMessage()}
+                    {this.renderButton()}
+                    {this.renderMessage()}
                 </ScrollView>
             </KeyboardAvoidingView>
         )
